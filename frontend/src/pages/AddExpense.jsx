@@ -1,9 +1,14 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { formatCropName } from "../utils/areaUtils";
 import "./AddExpense.css";
 
 const AddExpense = () => {
   const { farmId: routeFarmId, id } = useParams(); // id = expenseId (edit)
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const initialCrop = queryParams.get("crop") || "";
+
   const isEdit = Boolean(id);
   const navigate = useNavigate();
 
@@ -14,7 +19,14 @@ const AddExpense = () => {
     expenseDate: "",
     notes: "",
     farmId: routeFarmId || "",
+    cropName: initialCrop, // ✅ Default to query param
+    isCalculated: false,
+    rate: "",
+    units: "",
+    unitName: "acres"
   });
+
+  const [crops, setCrops] = useState([]);
 
   // ✅ FETCH EXPENSE IN EDIT MODE
   useEffect(() => {
@@ -30,14 +42,77 @@ const AddExpense = () => {
               expenseDate: data.expense.expenseDate,
               notes: data.expense.notes || "",
               farmId: data.expense.farmId, // 🔥 IMPORTANT
+              cropName: data.expense.cropName || "",
+              isCalculated: data.expense.calculationDetails?.isCalculated || false,
+              rate: data.expense.calculationDetails?.rate || "",
+              units: data.expense.calculationDetails?.units || "",
+              unitName: data.expense.calculationDetails?.unitName || "acres",
             });
           }
         });
     }
-  }, [id, isEdit]);
+
+    // Fetch farm details to get available crops
+    const fetchCrops = async () => {
+      const targetFarmId = routeFarmId || form.farmId;
+      if (!targetFarmId) return;
+      try {
+        const res = await fetch(`http://localhost:5000/api/farm/details/${targetFarmId}`);
+        const data = await res.json();
+        if (data.success && data.data && data.data.crops) {
+          setCrops(data.data.crops);
+          // Auto-select first crop if none is selected and it's not edit mode
+          if (!isEdit && !form.cropName && !initialCrop && data.data.crops.length > 0) {
+            setForm(prev => ({ ...prev, cropName: data.data.crops[0].name }));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load farm crops", err);
+      }
+    };
+
+    fetchCrops();
+  }, [id, isEdit, routeFarmId]);
+
+  const getCategoryDefaults = (category) => {
+    switch (category) {
+      case "Labor":
+        return { rateLabel: "Wage per Laborer/Area (₹)", unitLabel: "No. of Laborers / Area", unitOptions: ["laborers", "shifts", "cents", "acres"] };
+      case "Seeds":
+        return { rateLabel: "Price per kg/packet (₹)", unitLabel: "Weight/Packets", unitOptions: ["kg", "g", "packets"] };
+      case "Irrigation":
+        return { rateLabel: "Cost per hr/acre (₹)", unitLabel: "Hours/Area", unitOptions: ["hours", "acres", "cents"] };
+      case "Fertilizer":
+        return { rateLabel: "Price per bag/kg (₹)", unitLabel: "Amount", unitOptions: ["bags", "kg", "liters"] };
+      case "Pesticide":
+        return { rateLabel: "Price per L/kg (₹)", unitLabel: "Amount", unitOptions: ["liters", "ml", "kg"] };
+      case "Machinery":
+        return { rateLabel: "Rental per hr/day (₹)", unitLabel: "Duration", unitOptions: ["hours", "days"] };
+      default:
+        return { rateLabel: "Rate (₹)", unitLabel: "Units", unitOptions: ["items", "kg", "acres", "liters"] };
+    }
+  };
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    const newVal = type === "checkbox" ? checked : value;
+
+    setForm(prev => {
+      const nextForm = { ...prev, [name]: newVal };
+      if (name === "category") {
+        const defaults = getCategoryDefaults(newVal);
+        if (!defaults.unitOptions.includes(nextForm.unitName)) {
+          nextForm.unitName = defaults.unitOptions[0];
+        }
+      }
+
+      if (nextForm.isCalculated && (name === "rate" || name === "units" || name === "isCalculated")) {
+        const rate = parseFloat(nextForm.rate) || 0;
+        const units = parseFloat(nextForm.units) || 0;
+        nextForm.amount = (rate * units).toFixed(2);
+      }
+      return nextForm;
+    });
   };
 
   // ✅ ADD / EDIT SUBMIT
@@ -51,8 +126,20 @@ const AddExpense = () => {
     const method = isEdit ? "PUT" : "POST";
 
     const payload = {
-      ...form,
+      title: form.title,
+      category: form.category,
+      amount: form.amount,
+      expenseDate: form.expenseDate,
+      notes: form.notes,
+      farmId: form.farmId,
+      cropName: form.cropName || undefined,
       userId: localStorage.getItem("userId"),
+      calculationDetails: form.isCalculated ? {
+        isCalculated: true,
+        rate: Number(form.rate),
+        units: Number(form.units),
+        unitName: form.unitName
+      } : { isCalculated: false }
     };
 
     const res = await fetch(url, {
@@ -101,13 +188,77 @@ const AddExpense = () => {
           <option>Other</option>
         </select>
 
+        <select
+          name="cropName"
+          value={form.cropName}
+          onChange={handleChange}
+          required
+        >
+          <option value="" disabled>Select Crop</option>
+          {crops.map((crop, idx) => (
+            <option key={idx} value={crop.name}>{formatCropName(crop.name)}</option>
+          ))}
+        </select>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", margin: "10px 0", color: "#ddd" }}>
+          <input
+            type="checkbox"
+            name="isCalculated"
+            id="isCalculated"
+            checked={form.isCalculated}
+            onChange={handleChange}
+            style={{ width: "auto", margin: 0 }}
+          />
+          <label htmlFor="isCalculated">Calculate Amount (Rate × Units)</label>
+        </div>
+
+        {form.isCalculated && (() => {
+          const { rateLabel, unitLabel, unitOptions } = getCategoryDefaults(form.category);
+          return (
+            <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+              <input
+                type="number"
+                name="rate"
+                placeholder={rateLabel}
+                value={form.rate}
+                onChange={handleChange}
+                min="0"
+                step="0.01"
+                required
+                style={{ flex: 1, padding: "10px" }}
+              />
+              <input
+                type="number"
+                name="units"
+                placeholder={unitLabel}
+                value={form.units}
+                onChange={handleChange}
+                min="0"
+                step="0.01"
+                required
+                style={{ flex: 1, padding: "10px" }}
+              />
+              <select
+                name="unitName"
+                value={form.unitName}
+                onChange={handleChange}
+                style={{ flex: 1, padding: "10px", textTransform: "capitalize" }}
+              >
+                {unitOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+              </select>
+            </div>
+          );
+        })()}
+
         <input
           type="number"
           name="amount"
-          placeholder="Amount (₹)"
+          placeholder="Total Amount (₹)"
           value={form.amount}
           onChange={handleChange}
           required
+          readOnly={form.isCalculated}
+          style={form.isCalculated ? { backgroundColor: "#333", color: "#aaa" } : {}}
         />
 
         <input

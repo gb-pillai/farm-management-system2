@@ -29,6 +29,10 @@ const ExpenseSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    cropName: {
+      type: String,
+      required: false, // Optional, for tracking expense per crop
+    },
 
     notes: String,
   },

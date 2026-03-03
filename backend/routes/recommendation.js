@@ -31,19 +31,19 @@ router.post("/next-date", async (req, res) => {
     );
 
     res.json({
-        crop,
-        stage,
-        fertilizer,
-        cropInterval,
-        fertilizerInterval: fertInterval,
-        baseInterval,  // 🔥 ADD THIS LINE
-        farmerInterval: farmerInterval || null,
-        usedInterval: decision.finalDays, 
-        nextDate,
-        weatherStatus: "Suitable",
-        weatherReason: "Weather assumed good",
-        message: decision.message
-      });
+      crop,
+      stage,
+      fertilizer,
+      cropInterval,
+      fertilizerInterval: fertInterval,
+      baseInterval,  // 🔥 ADD THIS LINE
+      farmerInterval: farmerInterval || null,
+      usedInterval: decision.finalDays,
+      nextDate,
+      weatherStatus: "Suitable",
+      weatherReason: "Weather assumed good",
+      message: decision.message
+    });
 
   } catch (err) {
     console.error(err);
@@ -62,6 +62,44 @@ router.post("/stages", (req, res) => {
 
   const stages = Object.keys(fertilizers[crop]);
   res.json({ stages });
+});
+
+const { spawn } = require("child_process");
+const path = require("path");
+
+router.post("/fertilizer", (req, res) => {
+  const { n, p, k, temperature, humidity, moisture, soilType, crop, stage } = req.body;
+
+  // Validate inputs
+  if (n === undefined || !p || !k || !temperature || !humidity || !moisture || !soilType || !crop || !stage) {
+    return res.status(400).json({ success: false, message: "Missing required ML features" });
+  }
+
+  const scriptPath = path.join(__dirname, "../ml/predict_fertilizer.py");
+
+  // Arguments order: n, p, k, temp, hum, moist, soil, crop, stage
+  const args = [scriptPath, n, p, k, temperature, humidity, moisture, soilType, crop, stage];
+
+  const pythonProcess = spawn("python", args);
+
+  let prediction = "";
+  let errorMsg = "";
+
+  pythonProcess.stdout.on("data", (data) => {
+    prediction += data.toString();
+  });
+
+  pythonProcess.stderr.on("data", (data) => {
+    errorMsg += data.toString();
+  });
+
+  pythonProcess.on("close", (code) => {
+    if (code !== 0 || errorMsg.includes("ERROR:")) {
+      console.error("ML Prediction Error:", errorMsg);
+      return res.status(500).json({ success: false, message: "Failed to generate recommendation" });
+    }
+    res.json({ success: true, recommendation: prediction.trim() });
+  });
 });
 
 module.exports = router;

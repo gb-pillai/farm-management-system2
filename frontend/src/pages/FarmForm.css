@@ -88,6 +88,14 @@ select {
     width: 100%;
     padding: 10px;
     border-radius: 8px;
-    border: 1px solid #ccc;
+    background: #2a2a2a;
+    color: #ffffff;
+    border: 1px solid #3a3a3a;
     font-size: 14px;
+}
+
+select:focus {
+    outline: none;
+    border-color: #4caf50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.25);
 }

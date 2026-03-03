@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getPreferredUnit, acresToDisplay, shortLabel, formatCropName } from "../utils/areaUtils";
 import { useNavigate } from "react-router-dom";
 import FertilizerStatusChart from "../components/charts/FertilizerStatusChart";
 import ProfitPerFarmChart from "../components/charts/ProfitPerFarmChart";
@@ -11,6 +12,7 @@ function Dashboard() {
   const [profitData, setProfitData] = useState([]);
   const [expenseCategoryData, setExpenseCategoryData] = useState([]);
   const [farmUsageData, setFarmUsageData] = useState([]);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   const [summary, setSummary] = useState({
     totalFarms: 0,
@@ -88,7 +90,7 @@ function Dashboard() {
     const userId = localStorage.getItem("userId");
     if (!userId) return;
 
-    fetch(`http://localhost:5000/api/analytics/dashboard/profit/${userId}`)
+    fetch(`http://localhost:5000/api/analytics/dashboard/profit/${userId}?year=${selectedYear}`)
       .then((res) => res.json())
       .then((result) => {
         if (result.success) {
@@ -96,7 +98,7 @@ function Dashboard() {
         }
       })
       .catch((err) => console.error(err));
-  }, []);
+  }, [selectedYear]);
 
   // ==============================
   // FETCH EXPENSE CATEGORY DATA (ALL FARMS)
@@ -105,9 +107,7 @@ function Dashboard() {
     const userId = localStorage.getItem("userId");
     if (!userId) return;
 
-    fetch(
-      `http://localhost:5000/api/analytics/dashboard/expenses/${userId}`
-    )
+    fetch(`http://localhost:5000/api/analytics/dashboard/expenses/${userId}?year=${selectedYear}`)
       .then((res) => res.json())
       .then((result) => {
         if (result.success) {
@@ -115,13 +115,15 @@ function Dashboard() {
         }
       })
       .catch((err) => console.error(err));
-  }, []);
+  }, [selectedYear]);
+
+  const username = localStorage.getItem("username") || "Farmer";
 
   return (
     <div className="dashboard-container">
       {/* HEADER */}
       <div className="dashboard-header">
-        <h1>🌾 Farm Dashboard</h1>
+        <h1>🌾 {username}'s Dashboard</h1>
         <p className="subtitle">
           Overview of your farms, expenses & fertilizers
         </p>
@@ -164,7 +166,30 @@ function Dashboard() {
 
       {/* ANALYTICS */}
       <section className="analytics-section">
-        <h2 className="section-title">📊 Analytics Overview</h2>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+          <h2 className="section-title" style={{ margin: 0 }}>📊 Analytics Overview</h2>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span style={{ fontSize: "0.85rem", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Analysis Year:</span>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              style={{
+                background: "#1e293b",
+                color: "#f1f5f9",
+                border: "1px solid #334155",
+                borderRadius: "6px",
+                padding: "4px 10px",
+                fontSize: "0.9rem",
+                cursor: "pointer",
+                outline: "none"
+              }}
+            >
+              {[2024, 2025, 2026].map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </div>
+        </div>
 
         <div className="charts-grid">
           <div className="chart-card">
@@ -202,14 +227,51 @@ function Dashboard() {
         ) : (
           <div className="farm-grid">
             {farms.map((farm) => (
-              <div
-                key={farm._id}
-                className="farm-card"
-                onClick={() => navigate(`/farm/${farm._id}`)}
-              >
-                <h4>{farm.farmName}</h4>
-                <p>{farm.cropName}</p>
-                <span className="view-link">View →</span>
+              <div key={farm._id} style={{ position: "relative" }}>
+                {/* Clickable farm card */}
+                <div
+                  className="farm-card"
+                  onClick={() => navigate(`/farm/${farm._id}`)}
+                >
+                  <h4>{farm.farmName}</h4>
+                  <p style={{ fontSize: "0.8rem", color: "#8fbc8f", margin: "2px 0 6px" }}>📍 {farm.location}</p>
+                  <p>{farm.crops && farm.crops.length > 0
+                    ? farm.crops.map(c => formatCropName(c)).join(", ")
+                    : formatCropName(farm.cropName)}</p>
+                  <span className="view-link">View →</span>
+                </div>
+
+                {/* Delete button placed outside clickable card to avoid event conflicts */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (window.confirm(`Delete farm "${farm.farmName}"? This cannot be undone.`)) {
+                      fetch(`http://localhost:5000/api/farm/${farm._id}`, { method: "DELETE" })
+                        .then(res => res.json())
+                        .then(data => {
+                          if (data.success) setFarms(prev => prev.filter(f => f._id !== farm._id));
+                          else alert("Failed to delete farm");
+                        })
+                        .catch(() => alert("Server error while deleting"));
+                    }
+                  }}
+                  style={{
+                    position: "absolute",
+                    bottom: "14px",
+                    right: "14px",
+                    padding: "4px 12px",
+                    backgroundColor: "#e53935",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    cursor: "pointer",
+                    fontSize: "0.78rem",
+                    fontWeight: "600",
+                    zIndex: 10
+                  }}
+                >
+                  🗑️ Delete
+                </button>
               </div>
             ))}
           </div>

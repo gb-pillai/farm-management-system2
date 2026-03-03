@@ -11,6 +11,7 @@ import AddIncome from "./pages/AddIncome";
 import FarmIncome from "./pages/FarmIncome";
 import YieldAnalyticsPage from "./pages/YieldAnalyticsPage";
 import Signup from "./pages/Signup";
+import FarmEditForm from "./pages/FarmEditForm";
 
 import './App.css'
 
@@ -30,15 +31,16 @@ function AppRoutes() {
       <Route path="/add-farm" element={<FarmForm />} />
       <Route path="/add-fertilizer" element={<FertilizerForm />} />
       <Route path="/expenses" element={<ExpenseAnalytics />} />
-      <Route path="/farm/:farmId/expenses"element={<FarmExpenseAnalytics />}/>
-      <Route path="/farm/:farmId/add-expense" element={<AddExpense />}/>
+      <Route path="/farm/:farmId/expenses" element={<FarmExpenseAnalytics />} />
+      <Route path="/farm/:farmId/add-expense" element={<AddExpense />} />
       <Route path="/expenses/edit/:id" element={<AddExpense />} />
       <Route path="/farm/:farmId/income/add" element={<AddIncome />} />
       <Route path="/farm/:farmId/income" element={<FarmIncome />} />
       <Route path="/farm/:id/yield" element={<YieldAnalyticsPage />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/farm/:farmId/edit" element={<FarmEditForm />} />
 
-      
+
     </Routes>
   );
 }

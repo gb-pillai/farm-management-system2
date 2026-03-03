@@ -35,6 +35,7 @@ function Login({ onLoginSuccess }) {
 
       if (data.success) {
         localStorage.setItem("userId", data.userId);
+        localStorage.setItem("username", data.username);
         setMessage("Login successful ✅");
 
         if (onLoginSuccess) {
@@ -45,7 +46,7 @@ function Login({ onLoginSuccess }) {
       } else {
         setMessage(data.message || "Invalid credentials");
       }
-    } catch  {
+    } catch {
       setMessage("Server error. Please try again.");
     } finally {
       setLoading(false);

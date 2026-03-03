@@ -13,7 +13,33 @@ function FertilizerForm() {
     date: "",
     intervalDays: "",
     notes: "",
+    cropName: "", // ✅ Store the selected crop
   });
+
+  const [farmCrops, setFarmCrops] = useState([]);
+  const [loadingCrops, setLoadingCrops] = useState(true);
+
+  // Fetch crops for this farm
+  useState(() => {
+    if (farmId) {
+      fetch(`http://localhost:5000/api/farm/details/${farmId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            const crops = data.data.crops && data.data.crops.length > 0
+              ? data.data.crops.map(c => c.name || c)
+              : (data.data.cropName ? [data.data.cropName] : []);
+
+            setFarmCrops(crops);
+            if (crops.length > 0) {
+              setForm((prev) => ({ ...prev, cropName: crops[0] }));
+            }
+          }
+          setLoadingCrops(false);
+        })
+        .catch(() => setLoadingCrops(false));
+    }
+  }, [farmId]);
 
   if (!farmId) {
     return (
@@ -27,7 +53,7 @@ function FertilizerForm() {
   }
 
   const handleSubmit = async () => {
-    if (!form.name || !form.quantity || !form.date || !form.intervalDays) {
+    if (!form.name || !form.quantity || !form.date || !form.intervalDays || !form.cropName) {
       alert("Please fill all required fields");
       return;
     }
@@ -46,8 +72,8 @@ function FertilizerForm() {
             intervalDays: Number(form.intervalDays),
             notes: form.notes,
             farmId,
-            userId: "000000000000000000000001",
-            cropName: "Paddy",
+            userId: localStorage.getItem("userId") || "000000000000000000000001",
+            cropName: form.cropName,
           }),
         }
       );
@@ -68,8 +94,8 @@ function FertilizerForm() {
     <div className="form-page">
       <div className="form-card">
         <button className="back-btn" onClick={() => navigate(-1)}>
-            ← Back to Farmland
-          </button>
+          ← Back to Farmland
+        </button>
         <h2 className="form-title">Add Fertilizer</h2>
 
         <div className="form-group">
@@ -83,6 +109,21 @@ function FertilizerForm() {
             }
           />
         </div>
+
+        {!loadingCrops && farmCrops.length > 0 && (
+          <div className="form-group">
+            <label>Crop</label>
+            <select
+              value={form.cropName}
+              onChange={(e) => setForm({ ...form, cropName: e.target.value })}
+              style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ddd" }}
+            >
+              {farmCrops.map((crop) => (
+                <option key={crop} value={crop}>{crop}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div className="form-group">
           <label>Quantity (kg)</label>

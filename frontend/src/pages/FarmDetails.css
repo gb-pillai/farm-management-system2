@@ -279,3 +279,211 @@ button:hover {
     font-size: 15px;
     opacity: 0.9;
 }
+
+/* ===== CROP EDIT FORM (Inline) ===== */
+.crop-edit-form {
+    background: #1e293b;
+    border: 1px solid #475569;
+    border-radius: 12px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 12px;
+    margin-bottom: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    animation: fiSlideDown 0.3s ease-out;
+}
+
+@keyframes fiSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.form-input,
+.form-select {
+    background: #0f172a !important;
+    color: #f1f5f9 !important;
+    border: 1px solid #334155 !important;
+    border-radius: 8px !important;
+    padding: 10px 14px !important;
+    font-size: 0.95rem !important;
+    outline: none !important;
+    transition: all 0.2s !important;
+}
+
+.form-input:focus,
+.form-select:focus {
+    border-color: #22c55e !important;
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2) !important;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.save-btn {
+    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+    color: #0f172a !important;
+    border: none !important;
+    padding: 12px 24px !important;
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    transition: all 0.2s !important;
+}
+
+.save-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4) !important;
+}
+
+.cancel-btn {
+    background: #334155 !important;
+    color: #cbd5e1 !important;
+    border: 1px solid #475569 !important;
+    padding: 12px 20px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.2s !important;
+}
+
+.cancel-btn:hover {
+    background: #475569 !important;
+    color: #f1f5f9 !important;
+}
+
+/* Ensure Chrome's date picker icon is readable in dark mode */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
+/* ===== SHARED UTILITIES (from FarmIncome) ===== */
+.fi-toggle-group {
+    display: flex;
+    background: #0f172a;
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+}
+
+.fi-toggle-btn {
+    background: transparent;
+    color: #64748b;
+    border: none;
+    padding: 7px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.fi-toggle-btn.active {
+    background: #22c55e;
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.fi-toggle-btn:not(.active):hover {
+    color: #e2e8f0;
+    background: #1e293b;
+}
+
+.fi-select {
+    background: #0f172a;
+    color: #e2e8f0;
+    border: 1px solid #334155;
+    border-radius: 7px;
+    padding: 7px 12px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.fi-select:focus {
+    border-color: #22c55e;
+}
+
+.fi-table-wrap {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid #334155;
+    background: #111827;
+}
+
+.fi-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.fi-table thead tr {
+    background: #0f172a;
+    border-bottom: 1px solid #334155;
+}
+
+.fi-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+}
+
+.fi-table tbody tr {
+    border-bottom: 1px solid #1e293b;
+    transition: background 0.15s;
+}
+
+.fi-table tbody tr:hover {
+    background: #1e293b;
+}
+
+.fi-table td {
+    padding: 14px 16px;
+    color: #cbd5e1;
+}
+
+.fi-amount {
+    font-weight: 700;
+    color: #4ade80;
+}
