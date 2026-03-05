@@ -937,6 +937,12 @@ function FarmDetails() {
             <strong>{recommendation.weatherStatus}</strong>
           </div>
 
+          {/*{recommendation.weatherReason && (
+            <p style={{ fontSize: "0.85rem", opacity: 0.8 }}>
+              Reason: {recommendation.weatherReason}
+            </p>
+          )}*/}
+
 
           {/* APPLY RECOMMENDATION */}
           <button
