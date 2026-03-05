@@ -229,13 +229,13 @@ function FarmDetails() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            crop: selectedCrop,   // ✅ use selected crop
+         body: JSON.stringify({
+            crop: selectedCrop,
             stage,
             fertilizer: fertilizerName.toLowerCase(),
             lastDate,
             farmerInterval: farmerInterval ? Number(farmerInterval) : undefined,
-            location: farm.location
+            district: farm.location
           })
         }
       );

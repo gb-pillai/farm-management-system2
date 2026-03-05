@@ -21,5 +21,21 @@ function isWeatherSuitable(forecastItem) {
 
   return { ok: true, reason: "Weather suitable" };
 }
+function getForecastForDate(forecastList, targetDate) {
 
-module.exports = { getForecast, isWeatherSuitable };
+  for (let item of forecastList) {
+
+    if (item.dt_txt.startsWith(targetDate)) {
+      return item;
+    }
+
+  }
+
+  return null;
+}
+
+module.exports = {
+  getForecast,
+  isWeatherSuitable,
+  getForecastForDate
+};

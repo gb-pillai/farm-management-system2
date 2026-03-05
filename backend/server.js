@@ -42,6 +42,8 @@ app.use("/api/income", require("./routes/income"));
 app.use("/api/weather", require("./routes/weather"));
 
 app.use("/api/yield", require("./routes/yield"));
+
+require("./jobs/weatherScheduler");
 // Test route
 app.get("/", (req, res) => {
   res.send("Backend running");

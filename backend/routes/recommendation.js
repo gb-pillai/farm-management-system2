@@ -5,11 +5,15 @@ const fertilizers = require("../data/fertilizers");
 const getNextDate = require("../utils/dateCalc");
 const decideInterval = require("../utils/intervalDecision");
 const fertilizerSafety = require("../data/fertilizerSafety");
-//const { getForecast, isWeatherSuitable } = require("../utils/weatherCheck");
+const {
+  getForecast,
+  isWeatherSuitable,
+  getForecastForDate
+} = require("../utils/weatherCheck");
 
 router.post("/next-date", async (req, res) => {
   try {
-    const { crop, stage, fertilizer, lastDate, farmerInterval } = req.body;
+    const { crop, stage, fertilizer, lastDate, farmerInterval, district } = req.body;
 
     if (!fertilizers[crop] || !fertilizers[crop][stage]) {
       return res.status(400).json({ message: "Invalid crop or stage" });
@@ -25,10 +29,44 @@ router.post("/next-date", async (req, res) => {
 
     const decision = decideInterval(baseInterval, farmerInterval);
 
-    const nextDate = getNextDate(
+    let nextDate = getNextDate(
       lastDate,
       decision.finalDays
     );
+
+    // 🌤 WEATHER CHECK
+    let weatherStatus = "Suitable";
+    let weatherReason = "Weather assumed good";
+
+    try {
+
+      const forecastList = await getForecast(district); // or farm district
+
+      const forecastItem = getForecastForDate(forecastList, nextDate);
+
+      if (forecastItem) {
+
+        const result = isWeatherSuitable(forecastItem);
+
+        weatherStatus = result.ok ? "Suitable" : "Not Suitable";
+        weatherReason = result.reason;
+
+        if (!result.ok) {
+
+          const dateObj = new Date(nextDate);
+          dateObj.setDate(dateObj.getDate() + 1);
+
+          nextDate = dateObj.toISOString().split("T")[0];
+
+        }
+
+      }
+
+    } catch (err) {
+
+      console.log("Weather API failed, skipping weather check");
+
+    }
 
     res.json({
       crop,
@@ -36,12 +74,12 @@ router.post("/next-date", async (req, res) => {
       fertilizer,
       cropInterval,
       fertilizerInterval: fertInterval,
-      baseInterval,  // 🔥 ADD THIS LINE
+      baseInterval,
       farmerInterval: farmerInterval || null,
       usedInterval: decision.finalDays,
       nextDate,
-      weatherStatus: "Suitable",
-      weatherReason: "Weather assumed good",
+      weatherStatus,
+      weatherReason,
       message: decision.message
     });
 
